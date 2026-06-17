@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистичний Аналіз - РГР</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tooltip.css">
+    
+    <!-- Libraries via CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Stat<span class="highlight">App</span></h2>
+                <p>Розрахункова робота</p>
+            </div>
+            <nav class="menu">
+                <button class="menu-btn active" data-target="data-section">Введення Даних</button>
+                <button class="menu-btn" data-target="task-1-6">Завдання 1-6 (Описова Статистика)</button>
+                <button class="menu-btn" data-target="task-7-10">Завдання 7-10 (Перевірка Гіпотез)</button>
+                <button class="menu-btn" data-target="task-11-15">Завдання 11-15 (Регресія та Дисперсійний аналіз)</button>
+                <button class="menu-btn" data-target="task-16">Завдання 16 (PCA/PFA)</button>
+                <button class="menu-btn" data-target="task-17" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">Підсумковий звіт у PDF</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="top-header">
+                <h1>Розрахункова графічна робота</h1>
+            </header>
+
+            <div class="scroll-container">
+                <!-- Data Input Section -->
+                <section id="data-section" class="panel active-panel">
+                    <h2>Крок 1. Генерація та введення даних</h2>
+                    <div class="cards-grid">
+                        <div class="card glass">
+                            <h3>Генерація випадкових вибірок</h3>
+                            <div class="form-group">
+                                <label>Обсяг вибірки (n ≥ 50)</label>
+                                <input type="number" id="sample-size" value="150" min="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Розподіл для генерації</label>
+                                <select id="dist-type">
+                                    <option value="normal">Нормальний (Гауссів)</option>
+                                    <option value="uniform">Рівномірний</option>
+                                </select>
+                            </div>
+                            <button id="generate-btn" class="btn primary">Згенерувати X, Y, Z</button>
+                        </div>
+                        
+                        <div class="card glass">
+                            <h3>Завантаження з Excel</h3>
+                            <p>Завантажте файл .xlsx із стовпцями X, Y, Z</p>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
+                                <label for="excel-upload" class="btn secondary">Вибрати файл</label>
+                                <span id="file-name">Файл не вибрано</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-preview card glass mt-4">
+                        <h3>Попередній перегляд даних</h3>
+                        <div class="table-container">
+                            <table id="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>X</th>
+                                        <th>Y</th>
+                                        <th>Z</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data goes here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tasks 1-6 -->
+                <section id="task-1-6" class="panel">
+                    <h2>Описова статистика (Вибірка X)</h2>
+                    
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми впорядкували елементи вибірки за зростанням для подальшого зручного аналізу та пошуку мінімального й максимального значень.">1. Варіаційний ряд (X)</span></h3>
+                        <div id="variation-series" class="result-box"></div>
+                    </div>
+
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми розбили весь діапазон значень на рівні інтервали (за формулою Стерджеса) і підрахували, скільки елементів потрапило в кожен інтервал.">2. Статистичний ряд (Групування)</span></h3>
+                        <div class="table-container">
+                            <table id="grouped-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Інтервал</th>
+                                        <th>Середина інтервалу (xi)</th>
+                                        <th>Частота (ni)</th>
+                                        <th>Відносна частота (wi)</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="card glass">
+                            <h3><span data-tooltip="Гістограма (стовпці) та полігон (ламана лінія) візуально показують щільність розподілу наших даних: де значень найбільше, а де найменше.">3. Полігон та гістограма частот</span></h3>
+                            <div id="plot-histogram" class="plot-container"></div>
+                        </div>
+                        <div class="card glass">
+                            <h3><span data-tooltip="Цей графік показує накопичену ймовірність (частоту). Він допомагає зрозуміти, яка частка вибірки є меншою за певне значення x.">4. Емпірична функція розподілу</span></h3>
+                            <div id="plot-edf" class="plot-container"></div>
+                        </div>
+                    </div>
+
+                    <div class="card glass mt-4">
+                        <h3><span data-tooltip="Тут розраховано міри центру (середнє, медіана, мода) та міри розсіяння (дисперсія, середнє квадратичне відхилення), а також асиметрію розподілу.">5-6. Числові характеристики (Описова та варіаційна статистика)</span></h3>
+                        <div class="stats-grid" id="descriptive-stats">
+                            <!-- Stats go here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tasks 7-10 -->
+                <section id="task-7-10" class="panel">
+                    <h2>Перевірка гіпотез (Вибірка X)</h2>
+                    
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="За допомогою методу міжквартильного розмаху (IQR) ми знайшли аномальні значення (викиди), які занадто сильно відрізняються від основної маси даних.">7. Перевірка на грубі помилки (Викиди за методом IQR)</span></h3>
+                        <div id="outliers-result" class="result-box"></div>
+                    </div>
+
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми порівняли нашу емпіричну функцію розподілу з ідеальною теоретичною нормальною функцією. Якщо максимальна відстань між ними (D_max) менша за критичну, розподіл вважається нормальним.">8. Перевірка гіпотези про нормальний розподіл (Критерій Колмогорова)</span></h3>
+                        <div id="kolmogorov-result" class="result-box"></div>
+                    </div>
+
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми порівняли реальні частоти в інтервалах з тими, які б ми отримали за умови ідеального нормального розподілу, та перевірили розбіжність за хі-квадрат критерієм.">9. Перевірка гіпотези за критерієм Пірсона (χ², α=0.05)</span></h3>
+                        <div id="pearson-result" class="result-box"></div>
+                    </div>
+
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми визначили діапазон, у якому із ймовірністю 95% знаходиться справжнє математичне сподівання всієї генеральної сукупності.">10. Довірчий інтервал для математичного сподівання (γ=0.95)</span></h3>
+                        <div id="confidence-interval-result" class="result-box"></div>
+                    </div>
+                </section>
+
+                <!-- Tasks 11-15 -->
+                <section id="task-11-15" class="panel">
+                    <h2>Регресія та двовимірний аналіз (Вибірки X, Y)</h2>
+                    
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми оцінили силу та напрямок лінійного зв'язку між ознаками X та Y. Чим ближче модуль кореляції до 1, тим сильніший лінійний зв'язок.">12. Коваріація та коефіцієнт кореляції</span></h3>
+                        <div class="stats-grid" id="correlation-stats"></div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="card glass">
+                            <h3><span data-tooltip="Ми побудували лінійну математичну модель залежності Y від X (метод найменших квадратів) і відобразили її графічно разом з реальними даними.">11 & 13. Лінійна регресія Y на X</span></h3>
+                            <div id="plot-linear-reg" class="plot-container"></div>
+                            <div id="linear-eq" class="result-box mt-2"></div>
+                        </div>
+                        <div class="card glass">
+                            <h3><span data-tooltip="Ми побудували складнішу модель у вигляді параболи (поліном 2-го степеня), яка може краще описувати дані, якщо зв'язок між X та Y не є суворо прямолінійним.">14. Нелінійна регресія (Поліноміальна 2-го степеня)</span></h3>
+                            <div id="plot-nonlinear-reg" class="plot-container"></div>
+                            <div id="nonlinear-eq" class="result-box mt-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="card glass mt-4">
+                        <h3><span data-tooltip="Ми порівняли середні значення вибірок X та Y, щоб перевірити, чи існує між ними статистично значуща різниця, чи вона є випадковою.">15. Дисперсійний аналіз (ANOVA) для X та Y</span></h3>
+                        <div id="anova-result" class="result-box"></div>
+                    </div>
+                </section>
+
+                <!-- Task 16 -->
+                <section id="task-16" class="panel">
+                    <h2>Багатовимірний аналіз (X, Y, Z)</h2>
+                    <div class="card glass mb-4">
+                        <h3><span data-tooltip="Ми перейшли від тривимірного простору (X, Y, Z) до нових незалежних координат (Головних Компонент), щоб виділити фактори, які найбільше впливають на дисперсію даних.">16. Метод головних компонент (PCA) та факторний аналіз (PFA)</span></h3>
+                        <div id="pca-result" class="result-box"></div>
+                        <div id="plot-pca" class="plot-container mt-4"></div>
+                    </div>
+                </section>
+
+                <!-- Task 17 (Report) -->
+                <section id="task-17" class="panel">
+                    <h2>Генерація підсумкового звіту</h2>
+                    <div class="card glass mb-4">
+                        <p>Нижче наведено повний звіт за всіма розрахунками. Усі результати та графіки сформовано автоматично на основі поточних даних.</p>
+                    </div>
+                    
+                    <div class="card glass" style="background: #fff; color: #000; height: auto; max-height: none; overflow: visible;">
+                        <div id="report-content" style="padding: 20px; font-family: 'Times New Roman', Times, serif; line-height: 1.5;">
+                            <!-- Report content will be injected here -->
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
